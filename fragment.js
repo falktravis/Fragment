@@ -10,6 +10,7 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.login(process.env.DISCORD_BOT_TOKEN);
 let logChannel;
 let mainChannel;
+let privateListingsChannel;
 client.on('ready', async () => {
     try {
         mainChannel = client.channels.cache.get('1224520138896838751');
@@ -20,6 +21,11 @@ client.on('ready', async () => {
         logChannel = client.channels.cache.get('1224520268463079464');
         if(logChannel == null){
             logChannel = await client.channels.fetch('1224520268463079464');
+        }
+
+        privateListingsChannel = client.channels.cache.get('1224856127825645709');
+        if(privateListingsChannel == null){
+            privateListingsChannel = await client.channels.fetch('1224856127825645709');
         }
     } catch (error) {
         await logChannel.send('Error fetching channel: ' + error);
@@ -249,6 +255,21 @@ function interval() {
                     ]});
                 }catch(error){
                     await logChannel.send('Error with item notification' + error);
+                }
+
+                //private listing channel notification
+                if(parseFloat((data?.price)?.replace(/[^\d.]/g, '')) < 5){
+                    try{
+                        await privateListingsChannel.send({embeds: [new EmbedBuilder()
+                            .setColor(0x0099FF)
+                            .setTitle(data.name + " - " + data.price + " TON")
+                            .setURL(currentListing)
+                            .setDescription(data.auctionEnd)
+                            .setTimestamp(new Date())
+                        ]});
+                    }catch(error){
+                        await logChannel.send('Error with item notification' + error);
+                    }
                 }
 
                 postNum++;
