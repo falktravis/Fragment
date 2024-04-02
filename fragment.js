@@ -54,12 +54,12 @@ let staticProxyDB;
 
 // Add cleanup logic on uncaught exception
 process.on('uncaughtException', async (err) => {
-    await logChannel.send('Uncaught Exception in ' + workerData.name + ': ' + err);
+    await logChannel.send('Uncaught Exception: ' + err);
 });
 
 // Add cleanup logic on unhandled promise rejection
 process.on('unhandledRejection', async (reason, promise) => {
-    await logChannel.send('Unhandled Rejection in ' + workerData.name + ':' + reason);
+    await logChannel.send('Unhandled Rejection: ' + reason);
 });
 
 const endTask = async () => {
@@ -162,9 +162,9 @@ const start = async () => {
                 //detect redirection
                 if ([300, 301, 302, 303, 307, 308].includes(response.status())) {
                     const redirectURL = response.headers()['location'];
-                    if(await redirectURL.split('?')[0] != (workerData.link).split('?')[0]){
+                    if(await redirectURL != 'https://fragment.com/?sort=listed&filter=sale'){
                         console.log(`Redirected to: ${redirectURL}`);
-                        logChannel.send(`${workerData.name} redirected to: ${redirectURL}`);
+                        logChannel.send(`Redirected to: ${redirectURL}`);
                         startError = true; 
                     }
                 }
@@ -240,9 +240,9 @@ function interval() {
             try{
                 await mainChannel.send({embeds: [new EmbedBuilder()
                     .setColor(0x0099FF)
-                    .setTitle(data.name + " - " + data.price + "TON")
+                    .setTitle(data.name + " - " + data.price + " TON")
                     .setURL(currentListing)
-                    .setDescription('End date: ' + data.auctionEnd)
+                    .setDescription(data.auctionEnd)
                     .setTimestamp(new Date())
                 ]});
             }catch(error){
