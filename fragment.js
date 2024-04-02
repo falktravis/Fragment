@@ -209,6 +209,7 @@ const getListings = async (num) => {
             }, num)
         }
     }catch (error){
+        await logPageContent(mainPage);
         await logChannel.send('Error with setting listing storage' + error);
     }
 }
@@ -216,44 +217,49 @@ const getListings = async (num) => {
 //the meat and cheese
 function interval() {
     setTimeout(async () => {
-        let postNum = 1;
+        try {
+            let postNum = 1;
 
-        //start up a new page with fresh proxy and get listings
-        await mainPage.reload({ waitUntil: 'load', timeout: 50000});
-        let currentListing = await getListings(1);
-        console.log("Current Listing: " + currentListing);
+            //start up a new page with fresh proxy and get listings
+            await mainPage.reload({ waitUntil: 'load', timeout: 50000});
+            let currentListing = await getListings(1);
+            console.log("Current Listing: " + currentListing);
 
-        //newPost is actually new
-        while(currentListing != listingStorage){
-            console.log("New Post: " + currentListing);
+            //newPost is actually new
+            while(currentListing != listingStorage){
+                console.log("New Post: " + currentListing);
 
-            let data = await mainPage.evaluate((postNum) => {
-                const container = document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(${postNum})`)
-                return {
-                    name: container.querySelector(`a > div.table-cell-value-row`).innerText,
-                    price: container.querySelector(`td.thin-last-col > a > div.table-cell-value.tm-value.icon-before.icon-ton`).innerText,
-                    auctionEnd: container.querySelector('div.tm-timer').innerText,
+                let data = await mainPage.evaluate((postNum) => {
+                    const container = document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(${postNum})`)
+                    return {
+                        name: container.querySelector(`a > div.table-cell-value-row`).innerText,
+                        price: container.querySelector(`td.thin-last-col > a > div.table-cell-value.tm-value.icon-before.icon-ton`).innerText,
+                        auctionEnd: container.querySelector('div.tm-timer').innerText,
+                    }
+                }, postNum)
+                
+                //check for listing deleted and collection error
+                try{
+                    await mainChannel.send({embeds: [new EmbedBuilder()
+                        .setColor(0x0099FF)
+                        .setTitle(data.name + " - " + data.price + " TON")
+                        .setURL(currentListing)
+                        .setDescription(data.auctionEnd)
+                        .setTimestamp(new Date())
+                    ]});
+                }catch(error){
+                    await logChannel.send('Error with item notification' + error);
                 }
-            }, postNum)
-            
-            //check for listing deleted and collection error
-            try{
-                await mainChannel.send({embeds: [new EmbedBuilder()
-                    .setColor(0x0099FF)
-                    .setTitle(data.name + " - " + data.price + " TON")
-                    .setURL(currentListing)
-                    .setDescription(data.auctionEnd)
-                    .setTimestamp(new Date())
-                ]});
-            }catch(error){
-                await logChannel.send('Error with item notification' + error);
-            }
 
-            postNum++;
-            currentListing = await getListings(postNum);
+                postNum++;
+                currentListing = await getListings(postNum);
+            }
+            
+            listingStorage = await getListings(1);
+        } catch (error) {
+            await logPageContent(mainPage);
+            await logChannel.send("Error with interval: " + error);
         }
-        
-        listingStorage = await getListings(1);
         interval();
     }, getRandomInterval());
 } 
