@@ -12,7 +12,6 @@ let logChannel;
 let mainChannel;
 client.on('ready', async () => {
     try {
-        console.log('going')
         mainChannel = client.channels.cache.get('1224520138896838751');
         if(mainChannel == null){
             mainChannel = await client.channels.fetch('1224520138896838751');
