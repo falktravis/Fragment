@@ -133,7 +133,7 @@ const start = async () => {
 
         //initialize the static isp proxy page
         mainBrowser = await puppeteer.launch({
-            headless: false,
+            headless: 'new',
             args: ['--no-sandbox', `--proxy-server=${randomProxyObj[0].Proxy}`],
             timeout: 60000
         });
