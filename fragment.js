@@ -1,3 +1,4 @@
+require('dotenv').config();
 const puppeteer = require('puppeteer-extra');
 const stealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(stealthPlugin());
@@ -79,8 +80,8 @@ const endTask = async () => {
 //randomize time till post check
 const getRandomInterval = () => {
     try {
-        const minNumber = 240000; //2 mins
-        const maxNumber = 900000; //5 mins
+        const minNumber = 120000; //2 mins
+        const maxNumber = 300000; //5 mins
         const power = 1.5;
         const random = Math.random();
         const range = maxNumber - minNumber;
@@ -133,7 +134,7 @@ const start = async () => {
 
         //initialize the static isp proxy page
         mainBrowser = await puppeteer.launch({
-            headless: 'new',
+            headless: false,
             args: ['--no-sandbox', `--proxy-server=${randomProxyObj[0].Proxy}`],
             timeout: 60000
         });
@@ -176,7 +177,7 @@ const start = async () => {
         await mainPage.setRequestInterception(true);
         mainPage.on('request', async request => {
             const resource = request.resourceType();
-            if(resource != 'document' && resource != 'script' && resource != 'xhr' && resource != 'fetch' && resource != 'other'){
+            if(resource != 'document'){
                 request.abort();
             }else{
                 request.continue();
@@ -204,7 +205,7 @@ const start = async () => {
 const getListings = async (num) => {
     try{
         if(startError == false){
-            return await mainPage.evaluate(() => {
+            return await mainPage.evaluate((num) => {
                 return document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(${num}) > td.wide-last-col.wide-only > a`).href
             }, num)
         }
@@ -238,10 +239,10 @@ function interval() {
             
             //check for listing deleted and collection error
             try{
-                mainChannel.send({ content: data.name + " - $" + data.price, embeds: [new EmbedBuilder()
+                await mainChannel.send({embeds: [new EmbedBuilder()
                     .setColor(0x0099FF)
-                    .setTitle(data.name + " - $" + data.price)
-                    .setURL('https://fragment.com' + currentListing)
+                    .setTitle(data.name + " - " + data.price + "TON")
+                    .setURL(currentListing)
                     .setDescription('End date: ' + data.auctionEnd)
                     .setTimestamp(new Date())
                 ]});
