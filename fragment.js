@@ -7,20 +7,19 @@ const fs = require('fs/promises');
 const { Client, GatewayIntentBits, EmbedBuilder} = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.login(process.env.DISCORD_BOT_TOKEN);
-
 let logChannel;
 let mainChannel;
 client.on('ready', async () => {
     try {
         console.log('going')
-        mainChannel = client.channels.cache.get('1111129387669127191');//1224149175537635491
+        mainChannel = client.channels.cache.get('1224520138896838751');
         if(mainChannel == null){
-            mainChannel = await client.channels.fetch('1111129387669127191');
+            mainChannel = await client.channels.fetch('1224520138896838751');
         }
 
-        logChannel = client.channels.cache.get('1111129387669127191');//1224149224552267909
+        logChannel = client.channels.cache.get('1224520268463079464');
         if(logChannel == null){
-            logChannel = await client.channels.fetch('1111129387669127191');
+            logChannel = await client.channels.fetch('1224520268463079464');
         }
     } catch (error) {
         await logChannel.send('Error fetching channel: ' + error);
@@ -29,6 +28,29 @@ client.on('ready', async () => {
     //Start up
     await start();
 });
+
+//Database connection
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://SpatulaSoftware:jpTANtS4n59oqlam@spatula-software.tyas5mn.mongodb.net/?retryWrites=true&w=majority";
+const mongoClient = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+let staticProxyDB;
+(async () => {
+    try {
+        await mongoClient.connect();
+        await mongoClient.db("admin").command({ ping: 1 });
+        console.log("online");
+        staticProxyDB = mongoClient.db('Spatula-Software').collection('staticProxies');
+    } catch(error){
+        await mongoClient.close();
+        console.log("Mongo Connection " + error);
+    }
+})();
 
 // Add cleanup logic on uncaught exception
 process.on('uncaughtException', async (err) => {
@@ -105,10 +127,14 @@ let isInitiate = true;
 
 const start = async () => {
     try{
+
+        //get a random proxy
+        const randomProxyObj = await staticProxyDB.aggregate([{ $sample: { size: 1 } }]).toArray();
+
         //initialize the static isp proxy page
         mainBrowser = await puppeteer.launch({
             headless: 'new',
-            args: ['--no-sandbox', `--proxy-server=`],
+            args: ['--no-sandbox', `--proxy-server=${randomProxyObj[0].Proxy}`],
             timeout: 60000
         });
         let pages = await mainBrowser.pages();
