@@ -24,9 +24,6 @@ client.on('ready', async () => {
     } catch (error) {
         await logChannel.send('Error fetching channel: ' + error);
     }
-
-    //Start up
-    await start();
 });
 
 //Database connection
@@ -46,6 +43,9 @@ let staticProxyDB;
         await mongoClient.db("admin").command({ ping: 1 });
         console.log("online");
         staticProxyDB = mongoClient.db('Spatula-Software').collection('staticProxies');
+
+        //Start up
+        await start();
     } catch(error){
         await mongoClient.close();
         console.log("Mongo Connection " + error);
