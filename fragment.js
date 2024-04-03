@@ -233,7 +233,6 @@ function interval() {
 
             //newPost is actually new
             while(currentListing != listingStorage[0] && currentListing != listingStorage[1] && currentListing != null){
-                currentListing = await getListing(postNum);
                 console.log("New Post: " + currentListing);
 
                 let data = await mainPage.evaluate((postNum) => {
@@ -283,6 +282,8 @@ function interval() {
                     currentListing = null;
                     await logChannel.send("Not-23 hours: " + data?.auctionEnd);
                 }*/
+                postNum++;
+                currentListing = await getListing(postNum);
             }
             
             listingStorage = [await getListing(1), await getListing(2)];
