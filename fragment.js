@@ -34,7 +34,6 @@ client.on('ready', async () => {
 
 //Database connection
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const { get } = require('http');
 const uri = "mongodb+srv://SpatulaSoftware:jpTANtS4n59oqlam@spatula-software.tyas5mn.mongodb.net/?retryWrites=true&w=majority";
 const mongoClient = new MongoClient(uri, {
   serverApi: {
@@ -196,7 +195,7 @@ const start = async () => {
         } catch (error) {await logChannel.send("Timeout on going to link")}
 
         
-        listingStorage = await getListingStorage();
+        listingStorage = [await getListing(1), await getListing(2)];
         console.log("Main Storage: " + listingStorage);
         if(isInitiate){
             interval();
@@ -208,12 +207,12 @@ const start = async () => {
     }
 }
 
-const getListingStorage = async () => {
+const getListing = async (num) => {
     try{
         if(startError == false){
-            return await mainPage.evaluate(() => {
-                return [document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(1) > td.wide-last-col.wide-only > a`).href, document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(2) > td.wide-last-col.wide-only > a`).href]
-            })
+            return await mainPage.evaluate((num) => {
+                return document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(${num}) > td.wide-last-col.wide-only > a`).href
+            }, num)
         }
     }catch (error){
         await logPageContent(mainPage);
@@ -229,13 +228,12 @@ function interval() {
 
             //start up a new page with fresh proxy and get listings
             await mainPage.reload({ waitUntil: 'load', timeout: 50000});
-            let currentListing = await mainPage.evaluate((num) => {
-                return document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(${num}) > td.wide-last-col.wide-only > a`).href
-            }, postNum)
+            let currentListing = await getListing(postNum);
             console.log("Current Listing: " + currentListing);
 
             //newPost is actually new
             while(currentListing != listingStorage[0] && currentListing != listingStorage[1] && currentListing != null){
+                let currentListing = await getListing(postNum);
                 console.log("New Post: " + currentListing);
 
                 let data = await mainPage.evaluate((postNum) => {
@@ -280,14 +278,14 @@ function interval() {
                 //**Also figure out what is causing the spam. That might not be the best way to solve it, the double listing storage might have already*/
                 /*if((data?.auctionEnd).includes("23")){
                     postNum++;
-                    currentListing = await getListings(postNum);
+                    currentListing = await getListing(postNum);
                 }else{
                     currentListing = null;
                     await logChannel.send("Not-23 hours: " + data?.auctionEnd);
                 }*/
             }
             
-            listingStorage = await getListingStorage();
+            listingStorage = [await getListing(1), await getListing(2)];
         } catch (error) {
             await logPageContent(mainPage);
             await logChannel.send("Error with interval: " + error);
