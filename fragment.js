@@ -272,13 +272,16 @@ function interval() {
                     }
                 }
 
-                if((data?.auctionEnd).includes("23")){
+                //**Look at how listing a name works. Maybe we can leave something like this in
+                
+                //**Also figure out what is causing the spam. That might not be the best way to solve it, the double listing storage might have already*/
+                /*if((data?.auctionEnd).includes("23")){
                     postNum++;
                     currentListing = await getListings(postNum);
                 }else{
                     currentListing = null;
                     await logChannel.send("Not-23 hours: " + data?.auctionEnd);
-                }
+                }*/
             }
             
             listingStorage = [await getListings(1), await getListings(2)];
