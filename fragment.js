@@ -195,7 +195,7 @@ const start = async () => {
         } catch (error) {await logChannel.send("Timeout on going to link")}
 
         
-        listingStorage = await getListings(1);
+        listingStorage = [await getListings(1), await getListings(2)];
         console.log("Main Storage: " + listingStorage);
         if(isInitiate){
             interval();
@@ -232,7 +232,7 @@ function interval() {
             console.log("Current Listing: " + currentListing);
 
             //newPost is actually new
-            while(currentListing != listingStorage){
+            while(currentListing != listingStorage[0] && currentListing != listingStorage[1] && currentListing != null){
                 console.log("New Post: " + currentListing);
 
                 let data = await mainPage.evaluate((postNum) => {
@@ -272,11 +272,16 @@ function interval() {
                     }
                 }
 
-                postNum++;
-                currentListing = await getListings(postNum);
+                if((data?.auctionEnd).includes("23")){
+                    postNum++;
+                    currentListing = await getListings(postNum);
+                }else{
+                    currentListing = null;
+                    await logChannel.send("Not-23 hours: " + data?.auctionEnd);
+                }
             }
             
-            listingStorage = await getListings(1);
+            listingStorage = [await getListings(1), await getListings(2)];
         } catch (error) {
             await logPageContent(mainPage);
             await logChannel.send("Error with interval: " + error);
