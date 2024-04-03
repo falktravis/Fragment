@@ -34,6 +34,7 @@ client.on('ready', async () => {
 
 //Database connection
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const { get } = require('http');
 const uri = "mongodb+srv://SpatulaSoftware:jpTANtS4n59oqlam@spatula-software.tyas5mn.mongodb.net/?retryWrites=true&w=majority";
 const mongoClient = new MongoClient(uri, {
   serverApi: {
@@ -195,7 +196,7 @@ const start = async () => {
         } catch (error) {await logChannel.send("Timeout on going to link")}
 
         
-        listingStorage = [await getListings(1), await getListings(2)];
+        listingStorage = await getListingStorage();
         console.log("Main Storage: " + listingStorage);
         if(isInitiate){
             interval();
@@ -207,12 +208,12 @@ const start = async () => {
     }
 }
 
-const getListings = async (num) => {
+const getListingStorage = async () => {
     try{
         if(startError == false){
-            return await mainPage.evaluate((num) => {
-                return document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(${num}) > td.wide-last-col.wide-only > a`).href
-            }, num)
+            return await mainPage.evaluate(() => {
+                return [document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(1) > td.wide-last-col.wide-only > a`).href, document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(2) > td.wide-last-col.wide-only > a`).href]
+            })
         }
     }catch (error){
         await logPageContent(mainPage);
@@ -228,7 +229,9 @@ function interval() {
 
             //start up a new page with fresh proxy and get listings
             await mainPage.reload({ waitUntil: 'load', timeout: 50000});
-            let currentListing = await getListings(1);
+            let currentListing = await mainPage.evaluate((num) => {
+                return document.querySelector(`#aj_content > main > section.tm-section.clearfix.js-search-results > div.tm-table-wrap > table > tbody > tr:nth-child(${num}) > td.wide-last-col.wide-only > a`).href
+            }, postNum)
             console.log("Current Listing: " + currentListing);
 
             //newPost is actually new
@@ -284,7 +287,7 @@ function interval() {
                 }*/
             }
             
-            listingStorage = [await getListings(1), await getListings(2)];
+            listingStorage = await getListingStorage();
         } catch (error) {
             await logPageContent(mainPage);
             await logChannel.send("Error with interval: " + error);
