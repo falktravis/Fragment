@@ -233,7 +233,7 @@ function interval() {
 
             //newPost is actually new
             while(currentListing != listingStorage[0] && currentListing != listingStorage[1] && currentListing != null){
-                let currentListing = await getListing(postNum);
+                currentListing = await getListing(postNum);
                 console.log("New Post: " + currentListing);
 
                 let data = await mainPage.evaluate((postNum) => {
